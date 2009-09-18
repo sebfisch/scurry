@@ -16,4 +16,6 @@ class Task(_exp: Expression, _parent: Task) {
       case Operation(_, code) => code(this)
     }
   }
+
+  override def toString = exp.toString
 }

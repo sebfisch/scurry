@@ -6,8 +6,13 @@ class Expression(var kind: ExpKind, var args: Array[Expression]) {
     args = _args
   }
 
-  override def toString =
-    kind.toString //+ "(" + args_str + ")"
+  override def toString = {
+    val arg_str = if (args.length == 0) "" else {
+      "(" + args(0) + args.slice(1,args.length)
+                          .foldLeft("")((s,x) => s + "," + x.toString) + ")"
+    }
+    kind.toString + arg_str
+  }
 }
 
 abstract class ExpKind

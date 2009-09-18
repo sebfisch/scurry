@@ -7,10 +7,11 @@ object DepthFirstEvaluator {
     tasks = new Task(exp, null) :: Nil
     var active = true
     while (active) {
+      println(tasks)
       tasks match {
         case Nil => active = false
         case task :: ts => {
-          tasks = task.perform match {
+          tasks = (task.perform match {
             case Nil => {
               if (task.parent != null) {
                 task.parent.decDeps
@@ -19,8 +20,8 @@ object DepthFirstEvaluator {
                 else ts
               } else ts
             }
-            case newts => newts ::: tasks
-          }
+            case newts => newts ::: ts
+          })
         }
       }
     }

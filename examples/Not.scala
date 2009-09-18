@@ -22,13 +22,13 @@ object Not {
   }
 
   private def not_call(arg: Expression) =
-    Exp.oper("not",Array(arg),node => not(node))
+    Exp.oper("not",Array(arg),task => not(task))
 
   def main(args: Array[String]) = {
     var arg = Exp.cons("false",Array())
-    var exp = not_call(not_call(not_call(arg)))
+    var exp = /*not_call(*/not_call(not_call(arg))//)
     DepthFirstEvaluator.hnf(exp)
-    println(exp)
+    // println(exp)
   }
 }  
 
