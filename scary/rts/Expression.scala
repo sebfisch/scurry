@@ -1,6 +1,8 @@
 package scary.rts
 
 class Expression(var kind: ExpKind, var args: Array[Expression]) {
+  def become(exp: Expression) = set(exp.kind, exp.args)
+
   def set(_kind: ExpKind, _args: Array[Expression]) = {
     kind = _kind
     args = _args

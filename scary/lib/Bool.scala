@@ -1,6 +1,7 @@
 package scary.lib
 
 import scary.rts._
+import scary.lib.helpers._
 
 object Bool {
 
@@ -14,21 +15,14 @@ object Bool {
     Exp.oper("not",Array(arg),task => not_(task))
 
   private def not_(task: Task) = {
-    val arg = task.exp.args(0);
-    arg.kind match {
-      case Constructor(name,_) => {
-        val res = name match {
-          case True_ => False_
-          case False_ => True_
-        }
-        task.exp.set(Constructor(res,true),new Array(0))
-        Nil
+    Match.one(task, 0, (name,_) => {
+      val res = name match {
+        case True_ => False_
+        case False_ => True_
       }
-      case Operation(_,_) => {
-        task.setDeps(1)
-        List(new Task(arg,task))
-      }
-    }
+      task.exp.set(Constructor(res,true),Array())
+      Nil
+    })
   }
 }  
 

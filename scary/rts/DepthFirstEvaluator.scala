@@ -9,7 +9,7 @@ object DepthFirstEvaluator {
     tasks = new Task(Normalise.nf_call(exp), null) :: Nil
     var active = true
     while (active) {
-      //println(tasks)
+      // println(tasks)
       tasks match {
         case Nil => active = false
         case task :: ts => {
