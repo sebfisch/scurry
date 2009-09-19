@@ -1,7 +1,6 @@
-package scary.rts
+package scurry.rts
 
-import scary.lib.Normalise
-
+import scurry.lib.helpers.Normalise
 import scala.collection.mutable._
 
 abstract class Q[T] {
@@ -31,10 +30,11 @@ class FifoQ[T] extends Q[T] {
 }
 
 class SequentialEvaluator(tasks: Q[Task]) {
-  def execute(exp: Expression) = {
-    tasks.put(new Task(Normalise.nf(exp), null) :: Nil)
+  def execute(exp: Expression): Expression = {
+    val goal = Normalise.nf(exp)
+    tasks.put(new Task(goal, null) :: Nil)
     while (!tasks.isEmpty) {
-      // println(tasks)
+      //println(tasks)
       val task = tasks.get
       task.perform match {
         case Nil => {
@@ -47,5 +47,6 @@ class SequentialEvaluator(tasks: Q[Task]) {
         case newts => tasks.put(newts)
       }
     }
+    goal
   }
 }

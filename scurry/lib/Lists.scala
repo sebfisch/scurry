@@ -1,7 +1,7 @@
-package scary.lib
+package scurry.lib
 
-import scary.rts._
-import scary.lib.helpers._
+import scurry.rts._
+import scurry.lib.helpers._
 
 object Lists {
 
@@ -30,10 +30,14 @@ object Lists {
 
   private def head_(task: Task): List[Task] = {
     Match.one(task,0,(name,_) => {
+      val exp = task.exp
       name match {
         case Cons_ => {
-          val arg = task.exp
-          arg.become(arg.args(0).args(0))
+          exp.become(exp.args(0).args(0))
+          Nil
+        }
+        case _ => {
+          exp.become(Exp.failure)
           Nil
         }
       }
@@ -45,10 +49,14 @@ object Lists {
 
   private def tail_(task: Task): List[Task] = {
     Match.one(task,0,(name,_) => {
+      val exp = task.exp
       name match {
         case Cons_ => {
-          val arg = task.exp
-          arg.become(arg.args(0).args(1))
+          exp.become(exp.args(0).args(1))
+          Nil
+        }
+        case _ => {
+          exp.become(Exp.failure)
           Nil
         }
       }

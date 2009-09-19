@@ -1,7 +1,7 @@
-package scary.test
+package scurry.test
 
-import scary.rts._
-import scary.lib._
+import scurry.rts._
+import scurry.lib._
 
 object SmallExamples {
   def main(args: Array[String]) = {
@@ -9,12 +9,11 @@ object SmallExamples {
     single_isEmpty
     project_cycle
     shared_not
+    nested_fail
   }
 
-  private def eval_print(exp: Expression) {
-    new SequentialEvaluator(new FifoQ()).execute(exp)
-    println(exp)
-  }
+  private def eval_print(exp: Expression) =
+    println(new SequentialEvaluator(new LifoQ()).execute(exp))
 
   private def triple_not =
     eval_print(Bool.not(Bool.not(Bool.not(Bool.False))))
@@ -29,4 +28,7 @@ object SmallExamples {
     val x = Bool.not(Bool.False)
     eval_print(Lists.Cons(x,Lists.Cons(x,Lists.Empty)))
   }
+
+  private def nested_fail =
+    eval_print(Lists.Cons(Lists.head(Lists.Empty),Lists.Empty))
 }

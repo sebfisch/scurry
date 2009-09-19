@@ -1,7 +1,7 @@
-package scary.lib
+package scurry.lib
 
-import scary.rts._
-import scary.lib.helpers._
+import scurry.rts._
+import scurry.lib.helpers._
 
 object Bool {
 

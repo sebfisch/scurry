@@ -1,4 +1,4 @@
-package scary.rts
+package scurry.rts
 
 class Task(_exp: Expression, _parent: Task) {
   private var _deps = 0
