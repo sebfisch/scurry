@@ -1,7 +1,3 @@
-# SCALAC = scalac
-# CFLAGS = -deprecation -optimise
-
-# all:
 COMPI = scalac
 FLAGS = -deprecation -optimise
 
@@ -25,6 +21,7 @@ rts: exp_and_task SequentialEvaluators.class
 
 exp_and_task:
 	$(COMPI) $(FLAGS) scurry/rts/Expression.scala scurry/rts/Task.scala
+
 SequentialEvaluators.class: exp_and_task Normalise.class
 
 lib: helpers Bool.class Lists.class
