@@ -10,10 +10,11 @@ object SmallExamples {
     project_cycle
     shared_not
     nested_fail
+    failing_cycle
   }
 
   private def eval_print(exp: Expression) =
-    println(new SequentialEvaluator(new LifoQ()).execute(exp))
+    println(new SequentialEvaluator(new FifoQ()).execute(exp))
 
   private def triple_not =
     eval_print(Bool.not(Bool.not(Bool.not(Bool.False))))
@@ -31,4 +32,11 @@ object SmallExamples {
 
   private def nested_fail =
     eval_print(Lists.Cons(Lists.head(Lists.Empty),Lists.Empty))
+
+  // needs bfs
+  private def failing_cycle = {
+    val l = Lists.Cons(Lists.head(Lists.Empty),null)
+    l.args.update(1,l)
+    eval_print(l)
+  }
 }
