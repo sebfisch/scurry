@@ -12,7 +12,7 @@ object SmallExamples {
   }
 
   private def eval_print(exp: Expression) {
-    DepthFirstEvaluator.execute(exp)
+    new SequentialEvaluator(new FifoQ()).execute(exp)
     println(exp)
   }
 
