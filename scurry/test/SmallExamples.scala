@@ -10,12 +10,17 @@ object SmallExamples {
     project_cycle
     shared_not
     nested_fail
-    failing_cycle
+//     failing_cycle
+    projection
+    calculation
+    comparison
+    small_fibo
+//     large_fibo
   }
 
   private def eval_print(exp: Expression) =
     // use LifoQ or depth-first evaluation of redexes, FifoQ for breadth-first
-    println(new SequentialEvaluator(new FifoQ()).execute(exp))
+    println(new SequentialEvaluator(new LifoQ()).execute(exp))
 
   private def triple_not =
     eval_print(Bool.not(Bool.not(Bool.not(Bool.False))))
@@ -40,4 +45,24 @@ object SmallExamples {
     l.args.update(1,l)
     eval_print(l)
   }
+
+  private def projection =
+    eval_print(
+      Bool.not(Lists.head(Lists.Cons(Bool.not(Bool.True),Exp.failure))))
+
+  private def calculation =
+    eval_print(
+      Integer.leq(Integer.plus(Integer.value(35),Integer.value(6)),
+                  Integer.times(Integer.value(6),Integer.value(7))))
+
+  private def comparison =
+    eval_print(
+      Bool.eq(Lists.Cons(Integer.value(2),Lists.Empty),
+              Lists.Cons(Integer.value(3),Lists.Empty)))
+
+  private def small_fibo =
+    eval_print(Integer.fibo(Integer.value(4)))
+
+  private def large_fibo =
+    eval_print(Integer.fibo(Integer.value(27)))
 }

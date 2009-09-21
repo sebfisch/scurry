@@ -2,24 +2,37 @@ package scurry.lib.helpers
 
 import scurry.rts._
 
-object Match {
-  def one(task: Task, index: Int, 
-          replace: (ConsName,Boolean,Array[Expression]) => List[Task]) = {
-    val arg = task.exp.args(index)
-    arg.kind match {
+class Module {
+  def ret(task: Task, result: Expression) = {
+    task.exp.become(result)
+    if (result.isHeadNormalised) Nil else List(task)    
+  }
+
+  def retCons(task: Task, kind: ExpKind, args: Array[Expression]) = {
+    task.exp.set(kind,args)
+    Nil
+  }
+
+  def project(task: Task): List[Task] =
+    if (task.exp.isHeadNormalised) Nil else List(task)
+
+  def matchArg(task: Task, index: Int, 
+               replace: (ConsName,Boolean,Array[Expression]) => List[Task]) = {
+    val exp = task.exp.args(index)
+    exp.kind match {
       case Failure => { 
         task.exp.become(Exp.failure)
         Nil
       }
-      case Constructor(name,isNF) => replace(name,isNF,arg.args)
+      case Constructor(name,isNF) => replace(name,isNF,exp.args)
       case Operation(_,_) => {
         task.setDeps(1)
-        List(new Task(arg,task))
+        List(new Task(exp,task))
       }
     }
   }
 
-  def args(task: Task, indices: List[Int], 
+  def matchArgs(task: Task, indices: List[Int], 
            replace: List[(ConsName,Boolean,Array[Expression])] => List[Task]) =
   {
     // indices lists the arguments to be matched

@@ -3,7 +3,7 @@ package scurry.lib
 import scurry.rts._
 import scurry.lib.helpers._
 
-object Lists {
+object Lists extends Module {
 
   case object Empty_ extends ConsName
   case object Cons_  extends ConsName
@@ -15,13 +15,12 @@ object Lists {
     Exp.oper("null",Array(l),t=>isEmpty_(t))
 
   private def isEmpty_(task: Task): List[Task] = {
-    Match.one(task, 0, (name,_,_) => {
+    matchArg(task, 0, (name,_,_) => {
       val res = name match {
         case Empty_ => Bool.True_
         case Cons_  => Bool.False_
       }
-      task.exp.set(Constructor(res,true), Array())
-      Nil
+      retCons(task, Constructor(res,true), Array())
     })
   }
 
@@ -29,17 +28,11 @@ object Lists {
     Exp.oper("head",Array(l),t=>head_(t))
 
   private def head_(task: Task): List[Task] = {
-    Match.one(task,0,(name,_,_) => {
+    matchArg(task,0,(name,_,_) => {
       val exp = task.exp
       name match {
-        case Cons_ => {
-          exp.become(exp.args(0).args(0))
-          Nil
-        }
-        case _ => {
-          exp.become(Exp.failure)
-          Nil
-        }
+        case Cons_ => ret(task,exp.args(0).args(0))
+        case _     => ret(task,Exp.failure)
       }
     })
   }
@@ -48,17 +41,11 @@ object Lists {
     Exp.oper("tail",Array(l),t=>tail_(t))
 
   private def tail_(task: Task): List[Task] = {
-    Match.one(task,0,(name,_,_) => {
+    matchArg(task,0,(name,_,_) => {
       val exp = task.exp
       name match {
-        case Cons_ => {
-          exp.become(exp.args(0).args(1))
-          Nil
-        }
-        case _ => {
-          exp.become(Exp.failure)
-          Nil
-        }
+        case Cons_ => ret(task,exp.args(0).args(1))
+        case _     => ret(task,Exp.failure)
       }
     })
   }
@@ -69,7 +56,6 @@ object Lists {
   private def repeat_(task: Task): List[Task] = {
     var l = Lists.Cons(task.exp.args(0),null)
     l.args.update(1,task.exp); // or l instead of task.exp
-    task.exp.become(l)
-    Nil
+    ret(task,l)
   }
 }

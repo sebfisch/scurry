@@ -22,13 +22,14 @@ exp_and_task:
 
 SequentialEvaluators.class: exp_and_task Normalise.class
 
-lib: helpers Bool.class Lists.class
+lib: helpers Bool.class Integer.class Lists.class
 
-Bool.class: exp_and_task Match.class
-Lists.class: exp_and_task Match.class Bool.class
+Bool.class: exp_and_task Module.class
+Integer.class: exp_and_task Module.class Bool.class
+Lists.class: exp_and_task Module.class Bool.class
 
-helpers: Match.class Normalise.class
+helpers: Module.class Normalise.class
 
-Match.class: exp_and_task
-Normalise.class: exp_and_task Match.class
+Module.class: exp_and_task
+Normalise.class: exp_and_task Module.class
 
