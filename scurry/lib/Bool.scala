@@ -46,7 +46,7 @@ object Bool extends Module {
       retCons(
         task,
         Constructor(
-          if (args.exists(x => x._1.equals(False_))) False_ else True_,
+          if (args.exists(x => x.equals(False_))) False_ else True_,
               true),
         Array())
     })
@@ -59,8 +59,10 @@ object Bool extends Module {
     val exp = task.exp
     matchArgs(task,Nil,args => {
       args match {
-        case (x,_,xs) :: (y,_,ys) :: Nil =>
+        case x :: y :: Nil =>
           if (x.equals(y)) {
+            val xs = exp.args(0).args
+            val ys = exp.args(1).args
             ret(task,
                 xs.zip(ys)
                   .foldRight(True)((p,b) =>

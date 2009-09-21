@@ -76,7 +76,7 @@ object Integer extends Module {
     task => {
       matchArgs(task,Nil,args => {
         args match {
-          case (Integer_(m),_,_) :: (Integer_(n),_,_) :: Nil =>
+          case Integer_(m) :: Integer_(n) :: Nil =>
             retCons(task,Constructor(op(m,n),true),Array())
           case _ => Nil
         }

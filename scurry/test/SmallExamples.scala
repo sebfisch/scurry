@@ -16,6 +16,7 @@ object SmallExamples {
     comparison
     small_fibo
 //     large_fibo
+    list_consumption
   }
 
   private def eval_print(exp: Expression) =
@@ -65,4 +66,11 @@ object SmallExamples {
 
   private def large_fibo =
     eval_print(Integer.fibo(Integer.value(27)))
+
+  private def list_consumption =
+    eval_print(
+      Lists.length(
+        Lists.drop(
+          Integer.value(300),
+          Lists.enumFromTo(Integer.value(1),Integer.value(1300)))))
 }

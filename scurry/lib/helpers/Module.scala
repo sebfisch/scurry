@@ -13,9 +13,6 @@ class Module {
     Nil
   }
 
-  def project(task: Task): List[Task] =
-    if (task.exp.isHeadNormalised) Nil else List(task)
-
   def matchArg(task: Task, index: Int, 
                replace: (ConsName,Boolean,Array[Expression]) => List[Task]) = {
     val exp = task.exp.args(index)
@@ -33,7 +30,7 @@ class Module {
   }
 
   def matchArgs(task: Task, indices: List[Int], 
-           replace: List[(ConsName,Boolean,Array[Expression])] => List[Task]) =
+                replace: List[ConsName] => List[Task]) =
   {
     // indices lists the arguments to be matched
     // indices.isEmpty indicates that all arguments are to be matched 
@@ -45,7 +42,7 @@ class Module {
       Nil
     } else if (exps.forall(e => e.isHeadNormalised)) {
       replace(exps.map(e => e.kind match {
-        case Constructor(name,isNF) => (name,isNF,e.args)
+        case Constructor(name,isNF) => name
       }))
     } else {
       val ops = exps.filter(e => e.isOperation)
