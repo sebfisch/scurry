@@ -15,7 +15,7 @@ object Lists {
     Exp.oper("null",Array(l),t=>isEmpty_(t))
 
   private def isEmpty_(task: Task): List[Task] = {
-    Match.one(task, 0, (name,_) => {
+    Match.one(task, 0, (name,_,_) => {
       val res = name match {
         case Empty_ => Bool.True_
         case Cons_  => Bool.False_
@@ -29,7 +29,7 @@ object Lists {
     Exp.oper("head",Array(l),t=>head_(t))
 
   private def head_(task: Task): List[Task] = {
-    Match.one(task,0,(name,_) => {
+    Match.one(task,0,(name,_,_) => {
       val exp = task.exp
       name match {
         case Cons_ => {
@@ -48,7 +48,7 @@ object Lists {
     Exp.oper("tail",Array(l),t=>tail_(t))
 
   private def tail_(task: Task): List[Task] = {
-    Match.one(task,0,(name,_) => {
+    Match.one(task,0,(name,_,_) => {
       val exp = task.exp
       name match {
         case Cons_ => {

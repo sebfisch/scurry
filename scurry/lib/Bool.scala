@@ -15,7 +15,7 @@ object Bool {
     Exp.oper("not",Array(arg),task => not_(task))
 
   private def not_(task: Task) = {
-    Match.one(task, 0, (name,_) => {
+    Match.one(task, 0, (name,_,_) => {
       val res = name match {
         case True_ => False_
         case False_ => True_

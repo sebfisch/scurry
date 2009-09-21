@@ -1,5 +1,5 @@
 COMPI = scalac
-FLAGS = -deprecation -optimise
+FLAGS = -deprecation # -optimise
 
 VPATH = scurry/rts scurry/lib scurry/lib/helpers scurry/test
 
@@ -12,10 +12,8 @@ all:
 clean:
 	git clean -fX
 
-examples: tests
+examples: all
 	scala scurry.test.SmallExamples
-
-tests: rts lib SmallExamples.class
 
 rts: exp_and_task SequentialEvaluators.class
 
@@ -32,5 +30,5 @@ Lists.class: exp_and_task Match.class Bool.class
 helpers: Match.class Normalise.class
 
 Match.class: exp_and_task
-Normalise.class: exp_and_task
+Normalise.class: exp_and_task Match.class
 

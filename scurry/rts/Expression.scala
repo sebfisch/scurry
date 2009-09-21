@@ -13,8 +13,18 @@ class Expression(var kind: ExpKind, var args: Array[Expression]) {
     case _ => false
   }
 
+  def isHeadNormalised = kind match {
+    case Constructor(_,_) => true
+    case _ => false
+  }
+
   def isFailure = kind match {
     case Failure => true
+    case _ => false
+  }
+
+  def isOperation = kind match {
+    case Operation(_,_) => true
     case _ => false
   }
 

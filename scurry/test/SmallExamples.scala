@@ -14,6 +14,7 @@ object SmallExamples {
   }
 
   private def eval_print(exp: Expression) =
+    // use LifoQ or depth-first evaluation of redexes, FifoQ for breadth-first
     println(new SequentialEvaluator(new FifoQ()).execute(exp))
 
   private def triple_not =
