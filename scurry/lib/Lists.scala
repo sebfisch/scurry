@@ -135,4 +135,26 @@ object Lists extends Module {
     ret(task,take(Integer.plus(Integer.minus(n,m),Integer.value(1)),
                   enumFrom(m)))
   }
+
+  def insert(x: Expression, xs: Expression): Expression =
+    Exp.oper("insert",Array(x,xs),t=>insert_(t))
+
+  private def insert_(task: Task) = {
+    val x  = task.exp.args(0)
+    val xs = task.exp.args(1)
+    ret(task,Exp.bin_choice(Cons(x,xs),insert1(x,xs)))
+  }
+
+  private def insert1(x: Expression, xs: Expression): Expression =
+    Exp.oper("insert1",Array(x,xs),insert1_)
+
+  private def insert1_(task: Task) = {
+    val x = task.exp.args(0)
+    matchArg(task,1, (name,_,args) => {
+      name match {
+        case Empty_ => ret(task,Exp.failure)
+        case Cons_  => ret(task,Cons(args(0),insert(x,args(1))))
+      }
+    })
+  }
 }

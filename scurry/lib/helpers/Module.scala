@@ -4,10 +4,8 @@ import scurry.rts._
 
 class Module {
   def ret(task: Task, result: Expression) = {
-//     println("replacing " + task.exp.kind + " with " + result.kind)
     task.exp.become(result)
-//     println("done replacing")
-    if (result.isHeadNormalised) Nil else List(task)   
+    if (result.isHeadNormalised || result.isChoice) Nil else List(task)   
   }
 
   def retCons(task: Task, kind: ExpKind, args: Array[Expression]) = {

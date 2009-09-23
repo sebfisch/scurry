@@ -5,21 +5,22 @@ import scurry.lib._
 
 object SmallExamples {
   def main(args: Array[String]) = {
-    triple_not
-    single_isEmpty
-    nested_fail
-    projection
-    calculation
-    comparison
-    small_fibo
-    coin_tossing
-    small_choice
-    weird_choice
-    hnf_test
-    nondet_plus
-    shared_not
-    singleton_coin
-    shared_coin
+//     triple_not
+//     single_isEmpty
+//     nested_fail
+//     projection
+//     calculation
+//     comparison
+//     small_fibo
+//     coin_tossing
+//     small_choice
+//     weird_choice
+//     hnf_test
+//     nondet_plus
+//     shared_not
+//     singleton_coin
+//     shared_coin
+    insert123
 //     list_consumption /* big hydra */
 //     large_fibo /* takes 20 seconds */
 //     project_cycle /* cannot print hydra */
@@ -30,7 +31,7 @@ object SmallExamples {
   private def eval_print(exp: Expression) {
     println(exp)
     // use LifoQ or depth-first evaluation of redexes, FifoQ for breadth-first
-    val results = new SequentialEvaluator(new FifoQ())
+    val results = new SequentialEvaluator(new LifoQ())
     results.init(exp)
     while (Console.readLine != "n" && results.hasNext) {
       println(results.next)
@@ -123,5 +124,11 @@ object SmallExamples {
   private def shared_coin = {
     val coin = Exp.bin_choice(Bool.True,Bool.False)
     eval_print(Lists.Cons(coin,Lists.Cons(coin,Lists.Empty)))
+  }
+
+  private def insert123 = {
+    val two3 = Lists.Cons(Integer.value(2),  Lists.Empty)
+//                           Lists.Cons(Integer.value(3),Lists.Empty))
+    eval_print(Lists.insert(Integer.value(1),two3))
   }
 }
