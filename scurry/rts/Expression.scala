@@ -1,11 +1,29 @@
 package scurry.rts
 
 class Expression(var kind: ExpKind, var args: Array[Expression]) {
-  def become(exp: Expression) = set(exp.kind, exp.args)
+  def become(exp: Expression) { set(exp.kind, exp.args) }
 
-  def set(_kind: ExpKind, _args: Array[Expression]) = {
+  def set(_kind: ExpKind, _args: Array[Expression]) {
     kind = _kind
     args = _args
+  }
+
+  def setKind(_kind: ExpKind) { kind = _kind }
+  def setArgs(_args: Array[Expression]) { args = _args }
+
+  def copy = new Expression(kind,args.toArray)
+
+  def simplifyChoice {
+    kind match {
+      case Choice => {
+        args.foreach(e => e.simplifyChoice)
+        args = args.filter(e => !e.isFailure)
+        args = args.flatMap(e => if (e.isChoice) e.args else Array(e))
+        if (args.isEmpty) kind = Failure
+        else if (args.length==1) become(args(0))
+      }
+      case _ => ()
+    }
   }
 
   def isNormalised = kind match {
@@ -25,6 +43,11 @@ class Expression(var kind: ExpKind, var args: Array[Expression]) {
     case _ => false
   }
 
+  def isChoice = kind match {
+    case Choice => true
+    case _ => false
+  }
+
   def isOperation = kind match {
     case Operation(_,_) => true
     case _ => false
@@ -35,7 +58,8 @@ class Expression(var kind: ExpKind, var args: Array[Expression]) {
       "(" + args(0) + args.slice(1,args.length)
                           .foldLeft("")((s,x) => s + "," + x.toString) + ")"
     }
-    kind.toString + arg_str
+    val desc = super.toString
+    kind.toString + arg_str // + desc.substring(desc.lastIndexOf('@'))
   }
 }
 
@@ -46,7 +70,7 @@ abstract class ConsName
 case class Constructor(name: ConsName, isNF: Boolean) extends ExpKind {
   override def toString = {
     val s = name.toString
-    s.substring(0,s.length-1) //+ (if (isNF) "!" else "")
+    s.substring(0,s.length-1) + (if (isNF) "!" else "")
   }
 }
 
@@ -76,7 +100,12 @@ object Exp {
 
   def failure = new Expression(Failure,Array())
 
-  def choice(l: Expression, r: Expression) =
-    new Expression(Choice,Array(l,r))
+  def bin_choice(l: Expression, r: Expression) = choice(Array(l,r))
+  def choice(args: Array[Expression]) = new Expression(Choice,args)
+  def simple_choice(args: Array[Expression]) = {
+    val c = choice(args)
+    c.simplifyChoice
+    c
+  }
 }
 

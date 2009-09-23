@@ -4,8 +4,10 @@ import scurry.rts._
 
 class Module {
   def ret(task: Task, result: Expression) = {
+//     println("replacing " + task.exp.kind + " with " + result.kind)
     task.exp.become(result)
-    if (result.isHeadNormalised) Nil else List(task)    
+//     println("done replacing")
+    if (result.isHeadNormalised) Nil else List(task)   
   }
 
   def retCons(task: Task, kind: ExpKind, args: Array[Expression]) = {
@@ -15,16 +17,50 @@ class Module {
 
   def matchArg(task: Task, index: Int, 
                replace: (ConsName,Boolean,Array[Expression]) => List[Task]) = {
-    val exp = task.exp.args(index)
-    exp.kind match {
+    val arg = task.exp.args(index)
+    arg.kind match {
       case Failure => { 
         task.exp.become(Exp.failure)
         Nil
       }
-      case Constructor(name,isNF) => replace(name,isNF,exp.args)
+      case Choice => {
+        arg.simplifyChoice
+        arg.args.partition(e => e.isHeadNormalised) match {
+          case (hnfs,es) => {
+            if (hnfs.isEmpty) {
+              task.setDeps(1)
+              es.map(e => new Task(e,task)).toList
+            } else {
+              var exp = task.exp
+              var ts = hnfs.map(h => {
+                var t = task.copy
+                t.exp.args.update(index,h)
+                t
+              })
+              var args = ts.map(t => t.exp)
+              if (!es.isEmpty) {
+                val e = if (es.length == 1) es(0)
+                        else Exp.simple_choice(es.toArray)
+
+                val copy = task.exp.copy
+                copy.args.update(index,e)
+                args = args ++ Array(copy)
+                task.setExp(copy)
+                if (task.deps.isEmpty)
+                  ts = ts ++ Array(task)
+                else
+                  task.setDeps(1)
+              }
+              exp.become(Exp.simple_choice(args.toArray))
+              ts.toList
+            }
+          }
+        }
+      }
+      case Constructor(name,isNF) => replace(name,isNF,arg.args)
       case Operation(_,_) => {
         task.setDeps(1)
-        List(new Task(exp,task))
+        List(new Task(arg,task))
       }
     }
   }
@@ -37,9 +73,12 @@ class Module {
     val exps: List[Expression] =
       if (indices.isEmpty) task.exp.args.toList
       else indices.map(i => task.exp.args(i))
+    var choiceIndex = exps.findIndexOf(e => e.isChoice)
     if (exps.exists(e => e.isFailure)) {
       task.exp.become(Exp.failure)
       Nil
+    } else if (choiceIndex >= 0) {
+      matchArg(task,choiceIndex, (_,_,_) => List(task))
     } else if (exps.forall(e => e.isHeadNormalised)) {
       replace(exps.map(e => e.kind match {
         case Constructor(name,isNF) => name

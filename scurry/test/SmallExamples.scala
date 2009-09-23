@@ -7,21 +7,35 @@ object SmallExamples {
   def main(args: Array[String]) = {
     triple_not
     single_isEmpty
-    project_cycle
-    shared_not
     nested_fail
-//     failing_cycle
     projection
     calculation
     comparison
     small_fibo
-//     large_fibo
-    list_consumption
+    coin_tossing
+    small_choice
+    weird_choice
+    hnf_test
+    nondet_plus
+    shared_not
+    singleton_coin
+    shared_coin
+//     list_consumption /* big hydra */
+//     large_fibo /* takes 20 seconds */
+//     project_cycle /* cannot print hydra */
+//     failing_cycle /* needs bfs */
+//     infinite_choice /* needs cycle check (e.g. using fprints) */
   }
 
-  private def eval_print(exp: Expression) =
+  private def eval_print(exp: Expression) {
+    println(exp)
     // use LifoQ or depth-first evaluation of redexes, FifoQ for breadth-first
-    println(new SequentialEvaluator(new LifoQ()).execute(exp))
+    val results = new SequentialEvaluator(new FifoQ())
+    results.init(exp)
+    while (Console.readLine != "n" && results.hasNext) {
+      println(results.next)
+    }
+  }
 
   private def triple_not =
     eval_print(Bool.not(Bool.not(Bool.not(Bool.False))))
@@ -73,4 +87,41 @@ object SmallExamples {
         Lists.drop(
           Integer.value(300),
           Lists.enumFromTo(Integer.value(1),Integer.value(1300)))))
+
+  private def coin_tossing =
+    eval_print(Exp.bin_choice(Bool.True,Bool.False))
+
+  private def small_choice =
+    eval_print(Bool.not(Exp.bin_choice(Bool.True,Bool.False)))
+
+  private def weird_choice =
+    eval_print(
+      Bool.not(Bool.not(Exp.bin_choice(
+        Bool.not(Bool.True),
+        Bool.not(Bool.False)))))
+
+  private def infinite_choice = {
+    val x: Expression = Exp.bin_choice(Bool.True,null)
+    x.args.update(1,x)
+    eval_print(x)
+  }
+
+  private def singleton_coin = {
+    val coin = Exp.bin_choice(Bool.True,Bool.False)
+    eval_print(Lists.Cons(coin,Lists.Empty))
+  }
+
+  private def nondet_plus = {
+    val one2  = Exp.bin_choice(Integer.value(1),Integer.value(2))
+    val ten20 = Exp.bin_choice(Integer.value(10),Integer.value(20))
+    eval_print(Integer.plus(one2,ten20))
+  }
+
+  private def hnf_test =
+    eval_print(Bool.not(Exp.bin_choice(Bool.True,Bool.not(Bool.True))))
+
+  private def shared_coin = {
+    val coin = Exp.bin_choice(Bool.True,Bool.False)
+    eval_print(Lists.Cons(coin,Lists.Cons(coin,Lists.Empty)))
+  }
 }

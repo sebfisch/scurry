@@ -56,6 +56,7 @@ object Lists extends Module {
   private def repeat_(task: Task): List[Task] = {
     var l = Lists.Cons(task.exp.args(0),null)
     l.args.update(1,task.exp); // or l instead of task.exp
+//     println("returning cycle")
     ret(task,l)
   }
 
