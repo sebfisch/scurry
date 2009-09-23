@@ -56,8 +56,8 @@ class SequentialEvaluator(tasks: Q[Task]) extends ExpIterator {
 
   private def computeNext: Boolean = {
     while (!(interrupted || tasks.isEmpty)) {
-      println(goal)
-      println(" " + tasks)
+//       println(goal)
+//       println(" " + tasks)
       val task = tasks.get
       task.perform match {
         case Nil => {

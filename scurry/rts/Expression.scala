@@ -70,7 +70,7 @@ abstract class ConsName
 case class Constructor(name: ConsName, isNF: Boolean) extends ExpKind {
   override def toString = {
     val s = name.toString
-    s.substring(0,s.length-1) + (if (isNF) "!" else "")
+    s.substring(0,s.length-1) // + (if (isNF) "!" else "")
   }
 }
 
