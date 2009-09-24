@@ -56,9 +56,24 @@ expressions as graphs:
 
 The distribution step creates a new choice, all alternatives are
 rooted by the distributed operation, and its arguments are updated
-according to the alternatives of the original choice. (This operation
-may destroy sharing of choices and, hence, does not adhere to
-call-time choice semantics.)
+according to the alternatives of the original choice. 
+
+This operation may destroy sharing of choices and, hence, does not
+adhere to call-time choice semantics. For example, the following is
+also a valid distribution.
+
+        +                    ?
+       / \                /     \
+       \ /               +       +
+        ?      ==>      / \     / \
+       / \             0   \   1   |
+      0   1                 \     /
+                               ?
+                              / \
+                             0   1
+
+The hnfs of the left expression are `?(0,2)`, the hnfs of the right
+expression are `?(0,1,1,2)`.
 
 Computation of normal forms
 ===========================
