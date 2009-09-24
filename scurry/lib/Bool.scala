@@ -37,6 +37,11 @@ object Bool extends Module {
     })
   }
 
+  def if_then(b: Expression, t: Expression) =
+    Exp.oper("if_then",Array(b,t),task => {
+      ret(task,if_then_else(b,t,Exp.failure))
+    })
+
   def par_and(x: Expression, y: Expression) =
     Exp.oper("|&|",Array(x,y),task => par_and_(task))
 

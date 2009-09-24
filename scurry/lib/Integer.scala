@@ -61,6 +61,11 @@ object Integer extends Module {
              fibo(minus(arg,value(1))))))
   }
 
+  def zeros() = Exp.oper("zeros",Array(),t=>zeros_(t))
+
+  private def zeros_(task: Task): List[Task] =
+    ret(task,Exp.bin_choice(value(0),zeros()))
+
   private def prim(op: Int => ConsName): Task => List[Task] = {
     task => {
       matchArg(task, 0, (int,_,_) => {

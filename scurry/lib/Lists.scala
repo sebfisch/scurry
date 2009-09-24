@@ -157,4 +157,44 @@ object Lists extends Module {
       }
     })
   }
+
+  def perm(l: Expression) = Exp.oper("perm",Array(l),t=>perm_(t))
+
+  private def perm_(task:Task): List[Task] = {
+    matchArg(task,0,(name,_,args) => {
+      name match {
+        case Empty_ => ret(task,Lists.Empty)
+        case Cons_  => ret(task,insert(args(0),perm(args(1))))
+      }
+    })
+  }
+
+  def sorted(l: Expression) = Exp.oper("sorted",Array(l),t=>sorted_(t))
+
+  private def sorted_(task: Task): List[Task] = {
+    matchArg(task,0, (name,_,args) => {
+      name match {
+        case Empty_ => ret(task,Lists.Empty)
+        case Cons_  => ret(task,sorted1(args(0),args(1)))
+      }
+    })
+  }
+
+  private def sorted1(x: Expression, xs: Expression) =
+    Exp.oper("sorted1",Array(x,xs),t=>sorted1_(t))
+
+  private def sorted1_(task: Task): List[Task] = {
+    val x  = task.exp.args(0)
+    val xs = task.exp.args(1)
+    matchArg(task,1, (name,_,args) => {
+      name match {
+        case Empty_ => ret(task,Lists.Cons(x,xs))
+        case Cons_  => {
+          val y  = args(0)
+          ret(task,Bool.if_then(Integer.leq(x,y),
+                                Lists.Cons(x,sorted(xs))))
+        }
+      }
+    })
+  }
 }

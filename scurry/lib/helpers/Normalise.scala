@@ -28,21 +28,19 @@ object Normalise extends Module {
       } else if (isNF) {
         task.exp.set(Constructor(name,true),args)
         Nil
-//       } else if (args.forall(x=>x.isNormalised)) {
-//         task.exp.args(0).set(Constructor(name,true),args)
-//         task.exp.set(Constructor(name,true),args)
-//         Nil
       } else {
         val consexp = task.exp.args(0)
         consexp.setKind(Operation(name.toString,
                                   t=>nf_cons_(Constructor(name,true),t)))
         consexp.setArgs(args.map(x => nf(x)))
-        task.setDeps(1)
-        List(new Task(consexp,task))
+        val ts = newTask(consexp,task).toList
+        task.setDeps(ts.length)
+        ts
       }
     })
   }
 
-  private def nf_cons_(kind: ExpKind, task: Task) =
+  private def nf_cons_(kind: ExpKind, task: Task) = {
     matchArgs(task,Nil,_ => retCons(task,kind,task.exp.args))
+  }
 }

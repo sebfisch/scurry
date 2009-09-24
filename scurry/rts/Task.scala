@@ -1,6 +1,6 @@
 package scurry.rts
 
-class Task(var _exp: Expression, _parent: Task) {
+class Task(var _exp: Expression, var _parent: Task) {
   private var _deps: Option[Int] = None
 
   def exp = _exp
@@ -15,12 +15,17 @@ class Task(var _exp: Expression, _parent: Task) {
   def clearDeps { _deps = None }
   def decDeps { _deps = _deps.map(c => c-1) }
 
+  private case object CANCELED_ extends ConsName
+
+  def cancel {
+    _exp = Exp.cons(CANCELED_,Array())
+    _parent = null
+  }
+
   def perform = {
-//     println("permorming task for: " + this)
     exp.kind match {
-      case Constructor(_,_) => Nil
-      case Operation(_, code) => code(this)
-      case Choice => Nil
+      case Operation(_,code) => code(this)
+      case _ => Nil
     }
   }
 

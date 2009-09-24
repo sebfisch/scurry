@@ -3,9 +3,23 @@ package scurry.lib.helpers
 import scurry.rts._
 
 class Module {
+  def newTask(exp: Expression, parent: Task) =
+    /*if (exp.isActive) None else*/ {
+      exp.setActive
+      Some(new Task(exp,parent))
+    }
+
   def ret(task: Task, result: Expression) = {
     task.exp.become(result)
-    if (result.isHeadNormalised || result.isChoice) Nil else List(task)   
+    retTasks(task,result)
+  }
+
+  private def retTasks(task: Task, exp: Expression): List[Task] = {
+    exp.kind match {
+      case Operation(_,_) => newTask(exp,task.parent).toList
+//       case Choice => exp.args.flatMap(e => retTasks(task,e)).toList
+      case _ => Nil
+    }
   }
 
   def retCons(task: Task, kind: ExpKind, args: Array[Expression]) = {
@@ -16,18 +30,18 @@ class Module {
   def matchArg(task: Task, index: Int, 
                replace: (ConsName,Boolean,Array[Expression]) => List[Task]) = {
     val arg = task.exp.args(index)
+    arg.simplifyChoice
     arg.kind match {
       case Failure => { 
         task.exp.become(Exp.failure)
         Nil
       }
       case Choice => {
-        arg.simplifyChoice
         arg.args.partition(e => e.isHeadNormalised) match {
           case (hnfs,es) => {
             if (hnfs.isEmpty) {
               task.setDeps(1)
-              es.map(e => new Task(e,task)).toList
+              es.flatMap(e => newTask(e,task)).toList
             } else {
               var exp = task.exp
               var ts = hnfs.map(h => {
@@ -43,11 +57,18 @@ class Module {
                 val copy = task.exp.copy
                 copy.args.update(index,e)
                 args = args ++ Array(copy)
-                task.setExp(copy)
-                if (task.deps.isEmpty)
-                  ts = ts ++ Array(task)
-                else
-                  task.setDeps(1)
+                ts = ts ++ newTask(copy,task.parent)
+                task.cancel // surprisingly tricky to reuse task safely
+                /* Here, we destroy the parent of a possibly long chain of
+                 * already executed tasks. If the end of this chain is picked
+                 * before the newly created task this is no problem, but if not
+                 * work is duplicated. The reason why we destroy the task is
+                 * that we cannot be sure that all operation rooted sub-terms
+                 * of the rotated choice are already active. Especially, when
+                 * a function returns a choice where one argument is in HNF
+                 * but the other is not, then it does not create a task for the
+                 * op-rooted alternative. It returns an empty list of tasks
+                 * to reenable the parent to be executed. */
               }
               exp.become(Exp.simple_choice(args.toArray))
               ts.toList
@@ -57,8 +78,9 @@ class Module {
       }
       case Constructor(name,isNF) => replace(name,isNF,arg.args)
       case Operation(_,_) => {
-        task.setDeps(1)
-        List(new Task(arg,task))
+        val ts = newTask(arg,task).toList
+        task.setDeps(ts.length)
+        ts
       }
     }
   }
@@ -82,9 +104,9 @@ class Module {
         case Constructor(name,isNF) => name
       }))
     } else {
-      val ops = exps.filter(e => e.isOperation)
-      task.setDeps(ops.length)
-      ops.map(e => new Task(e,task))
+      val ts = exps.flatMap(e => if (e.isOperation) newTask(e,task) else None)
+      task.setDeps(ts.length)
+      ts
     }
   }
 }

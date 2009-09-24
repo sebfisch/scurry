@@ -1,6 +1,8 @@
 package scurry.rts
 
 class Expression(var kind: ExpKind, var args: Array[Expression]) {
+  private var active = false
+  
   def become(exp: Expression) { set(exp.kind, exp.args) }
 
   def set(_kind: ExpKind, _args: Array[Expression]) {
@@ -11,7 +13,11 @@ class Expression(var kind: ExpKind, var args: Array[Expression]) {
   def setKind(_kind: ExpKind) { kind = _kind }
   def setArgs(_args: Array[Expression]) { args = _args }
 
-  def copy = new Expression(kind,args.toArray)
+  def copy = {
+    val exp = new Expression(kind,args.toArray)
+    exp.active = active
+    exp
+  }
 
   def simplifyChoice {
     kind match {
@@ -25,6 +31,9 @@ class Expression(var kind: ExpKind, var args: Array[Expression]) {
       case _ => ()
     }
   }
+
+  def isActive = active
+  def setActive { active = true }
 
   def isNormalised = kind match {
     case Constructor(_,isNF) => isNF
@@ -70,11 +79,11 @@ abstract class ConsName
 case class Constructor(name: ConsName, isNF: Boolean) extends ExpKind {
   override def toString = {
     val s = name.toString
-    s.substring(0,s.length-1) + (if (isNF) "!" else "")
+    s.substring(0,s.length-1) // + (if (isNF) "!" else "")
   }
 }
 
-case class Operation(name: String, code: Task => List[Task]) extends ExpKind {
+case class Operation(name: String,code: Task => List[Task]) extends ExpKind {
   override def toString = name
 }
 

@@ -5,37 +5,46 @@ import scurry.lib._
 
 object SmallExamples {
   def main(args: Array[String]) = {
-//     triple_not
-//     single_isEmpty
-//     nested_fail
-//     projection
-//     calculation
-//     comparison
-//     small_fibo
-//     coin_tossing
-//     small_choice
-//     weird_choice
-//     hnf_test
-//     nondet_plus
-//     shared_not
-//     singleton_coin
-//     shared_coin
+    triple_not
+    single_isEmpty
+    nested_fail
+    projection
+    calculation
+    comparison
+    small_fibo
+    coin_tossing
+    small_choice
+    weird_choice
+    hnf_test
+    nondet_plus
+    shared_not
+    singleton_coin
+    shared_coin
     insert123
+    perm123
+    sorted_ok
+    sorted_fail
+    permsort(10)
+//     infinite_zeros /* needs bfs */
 //     list_consumption /* big hydra */
 //     large_fibo /* takes 20 seconds */
 //     project_cycle /* cannot print hydra */
-//     failing_cycle /* needs bfs */
+//     failing_cycle /* cannot be printed, needs bfs */
 //     infinite_choice /* needs cycle check (e.g. using fprints) */
   }
 
   private def eval_print(exp: Expression) {
-    println(exp)
+    println("start evaluation of: " + exp)
     // use LifoQ or depth-first evaluation of redexes, FifoQ for breadth-first
     val results = new SequentialEvaluator(new LifoQ())
     results.init(exp)
-    while (Console.readLine != "n" && results.hasNext) {
+    while (userWantsMore && results.hasNext)
       println(results.next)
-    }
+  }
+
+  private def userWantsMore = {
+    println("more? [(n)o]")
+    Console.readLine != "n"
   }
 
   private def triple_not =
@@ -126,9 +135,40 @@ object SmallExamples {
     eval_print(Lists.Cons(coin,Lists.Cons(coin,Lists.Empty)))
   }
 
+  private def infinite_zeros =
+    eval_print(Integer.zeros())
+
   private def insert123 = {
-    val two3 = Lists.Cons(Integer.value(2),  Lists.Empty)
-//                           Lists.Cons(Integer.value(3),Lists.Empty))
+    val two3 = Lists.Cons(Integer.value(2),
+                          Lists.Cons(Integer.value(3),Lists.Empty))
     eval_print(Lists.insert(Integer.value(1),two3))
+  }
+
+  private def perm123 = {
+    eval_print(
+      Lists.perm(
+        Lists.Cons(Integer.value(1),
+                   Lists.Cons(Integer.value(2),
+                              Lists.Cons(Integer.value(3),Lists.Empty)))
+      )
+    )
+  }
+
+  private def sorted_ok =
+    eval_print(
+      Lists.sorted(
+        Lists.Cons(Integer.value(1),
+                   Lists.Cons(Integer.value(2),Lists.Empty))))
+
+  private def sorted_fail =
+    eval_print(
+      Lists.sorted(
+        Lists.Cons(Integer.value(2),
+                   Lists.Cons(Integer.value(1),Lists.Empty))))
+
+  private def permsort(n: Int) = {
+    val one = Integer.value(1)
+    val int = Integer.value(n)
+    eval_print(Lists.sorted(Lists.perm(Lists.enumFromTo(one,int))))
   }
 }
