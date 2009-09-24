@@ -73,7 +73,9 @@ also a valid distribution.
                              0   1
 
 The hnfs of the left expression are `?(0,2)`, the hnfs of the right
-expression are `?(0,1,1,2)`.
+expression are `?(0,1,1,2)`. (In fact, this depiction is inaccurate to
+increase readability: the different occurrences of `0` and `1` should
+be shared).
 
 Computation of normal forms
 ===========================
