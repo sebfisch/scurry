@@ -77,8 +77,8 @@ expression are `?(0,1,1,2)`. (In fact, this depiction is inaccurate to
 increase readability: the different occurrences of `0` and `1` should
 be shared).
 
-Computation of normal forms
-===========================
+Computing normal forms
+======================
 
 A normal form (nf) contains only constructors. To compute the nfs of
 an expression we compute its hnfs. To compute the nf of a
