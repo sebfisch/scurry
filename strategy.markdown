@@ -88,3 +88,20 @@ constrctor-rooted expression we can
   2. distribute the root constructor over a choice which has at least one
      alternative in nf.
 
+The following seems an alternative formulation of this (not sure
+whether it really is equivalent):
+
+We can compute nfs like hnfs by considering arguments of constructors
+needed. So instead of stopping at a constructor rooted term, we treat
+the root constructor as an operation that needs all arguments.
+
+In fact, nf computation could be implemented using hnf computation
+using the rewrite rule
+
+    nf(c(x1,...,xn)) -> c'(nf(x1),...,nf(xn))
+
+where, for every constructor `c`, `c'` is defined as
+
+    c'(!x1,...,!xn) -> c(x1,...,xn)
+
+where the exclamation mark `!` symbolises the need of the arguments.
