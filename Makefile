@@ -1,13 +1,13 @@
 COMPI = scalac
-FLAGS = -deprecation # -optimise
+FLAGS = -d bin -deprecation # -optimise
 
-VPATH = scurry/rts scurry/lib scurry/lib/helpers scurry/test
+VPATH = src/scurry/rts src/scurry/lib src/scurry/lib/helpers scurry/test
 
 %.class: %.scala
 	$(COMPI) $(FLAGS) $<
 
 all:
-	find . -name "*.scala" | xargs $(COMPI) $(FLAGS)
+	find src -name "*.scala" | xargs $(COMPI) $(FLAGS)
 
 clean:
 	git clean -fX
