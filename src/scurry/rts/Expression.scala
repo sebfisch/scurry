@@ -1,120 +1,75 @@
 package scurry.rts
 
-class Expression(var kind: ExpKind, var args: Array[Expression]) {
-  private var active = false
-  
-  def become(exp: Expression) { set(exp.kind, exp.args) }
-
-  def set(_kind: ExpKind, _args: Array[Expression]) {
-    kind = _kind
-    args = _args
-  }
-
-  def setKind(_kind: ExpKind) { kind = _kind }
-  def setArgs(_args: Array[Expression]) { args = _args }
-
-  def copy = {
-    val exp = new Expression(kind,args.toArray)
-    exp.active = active
-    exp
-  }
-
-  def simplifyChoice {
-    kind match {
-      case Choice => {
-        args.foreach(e => e.simplifyChoice)
-        args = args.filter(e => !e.isFailure)
-        args = args.flatMap(e => if (e.isChoice) e.args else Array(e))
-        if (args.isEmpty) kind = Failure
-        else if (args.length==1) become(args(0))
-      }
-      case _ => ()
-    }
-  }
-
-  def isActive = active
-  def setActive { active = true }
-
-  def isNormalised = kind match {
-    case Constructor(_,isNF) => isNF
-    case Failure => true
-    case _ => false
-  }
-
-  def isHeadNormalised = kind match {
-    case Constructor(_,_) => true
-    case Failure => true
-    case _ => false
-  }
-
-  def isFailure = kind match {
-    case Failure => true
-    case _ => false
-  }
-
-  def isChoice = kind match {
-    case Choice => true
-    case _ => false
-  }
-
-  def isOperation = kind match {
-    case Operation(_,_) => true
-    case _ => false
-  }
-
-  override def toString = {
-    val arg_str = if (args.length == 0) "" else {
-      "(" + args(0) + args.slice(1,args.length)
-                          .foldLeft("")((s,x) => s + "," + x.toString) + ")"
-    }
-    val desc = super.toString
-    kind.toString + arg_str // + desc.substring(desc.lastIndexOf('@'))
-  }
+// Scala has a funny way to specify enumeration types:
+// we define a factory object with local fields for the different values...
+object EvalStatus extends Enumeration {
+  type EvalStatus = Value
+  val 	Unused,		// not yet considered for evaluation
+  		Pending, 	// needed for evaluation but not (yet) waiting
+  		Waiting,	// waiting for needed subexpressions
+  		HNF,		// head normalised
+  		NF			// normalised
+  		= Value
 }
 
+// ...and import the local fields into the current scope
+import EvalStatus._
+
+// Expressions are either choice-, operation-, or constructor-rooted. 
 abstract class ExpKind
+case object Choice extends ExpKind
+// Constructors only have a name
+case class Constructor(name: String) extends ExpKind
+// Operations additionally have code which returns a list of expressions
+// that should be evaluated next. If the expression is a redex then the code
+// returns the reduct, if it has needed subexpressions then it returns those,
+// and if it is head normalised then it returns an empty list.
+case class Operation(name: String, deps: Int, code: () => Array[Expression]) 
+  extends ExpKind
 
-abstract class ConsName
-
-case class Constructor(name: ConsName, isNF: Boolean) extends ExpKind {
-  override def toString = {
-    val s = name.toString
-    s.substring(0,s.length-1) // + (if (isNF) "!" else "")
+class Expression(var kind: ExpKind, var args: Array[Expression]) {
+  private var status: EvalStatus = Unused;
+  private var parents: Array[Expression] = Array();
+  
+  def isHNF = status == NF || status == HNF
+  def checkHNF = {
+    val hnf = kind match {
+                case Choice           => args.exists(e => e.isHNF)
+                case Constructor(_)   => true
+                case Operation(_,_,_) => false
+              }
+    if (hnf) status = HNF
+    hnf
   }
-}
-
-case class Operation(name: String,code: Task => List[Task]) extends ExpKind {
-  override def toString = name
-}
-
-case object Failure extends ExpKind {
-  override def toString = "fail"
-}
-
-case object Choice extends ExpKind {
-  override def toString = "?"
-}
-
-object Exp {
-  def symb(kind: ExpKind, args: Array[Expression]) =
-    new Expression(kind, args)
-
-  def cons(name: ConsName, args: Array[Expression]) = {
-    val isNF = args.forall(x => x != null && x.isNormalised)
-    symb(Constructor(name,isNF), args)
+  
+  def setPending = status = Pending
+  
+  // Tells whether an expression is already scheduled or not
+  def shouldBeScheduled = status == Waiting || status == Unused;
+  
+  // Returns a list of expressions that should be evaluated next.
+  // (Head) normalised expressions are not returned but returned expressions
+  // may be pending already.
+  def nextExps: Array[Expression] = kind match {
+    case Choice => if (isHNF || checkHNF) Array()
+                   else args.filter(e => !e.isHNF)
+    case Operation(_,_,code) => code()
   }
-
-  def oper(name: String, args: Array[Expression], code: Task => List[Task] ) =
-    symb(Operation(name,code), args)
-
-  def failure = new Expression(Failure,Array())
-
-  def bin_choice(l: Expression, r: Expression) = choice(Array(l,r))
-  def choice(args: Array[Expression]) = new Expression(Choice,args)
-  def simple_choice(args: Array[Expression]) = {
-    val c = choice(args)
-    c.simplifyChoice
-    c
+  
+  def pendingParents: Array[Expression] = {
+    val exps = parents.filter(e => e.mayContinue)
+    parents = Array()
+    exps
+  }
+  
+  def mayContinue: Boolean = {
+    kind match {
+      case Choice => true
+      case Operation(name,deps,code) => {
+        kind = Operation(name,deps-1,code)
+        deps==1
+      }
+    }
   }
 }
 

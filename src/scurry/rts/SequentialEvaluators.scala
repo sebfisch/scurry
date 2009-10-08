@@ -6,30 +6,30 @@ import scala.collection.mutable._
 abstract class Q[T] {
   def isEmpty: Boolean
   def get: T
-  def put(iter: Iterable[T])
+  def put(elem: T)
 }
 
 class LifoQ[T] extends Q[T] {
   private val stack = new Stack[T]()
 
-  def isEmpty = stack.isEmpty
-  def get = stack.pop
-  def put(iter: Iterable[T]) = { stack ++= iter }
+  def isEmpty = stack isEmpty
+  def get = stack pop
+  def put(elem: T) = { stack push elem }
 
-  override def toString = stack.toString
+  override def toString = stack toString
 }
 
 class FifoQ[T] extends Q[T] {
   private val queue = new Queue[T]()
 
-  def isEmpty = queue.isEmpty
-  def get = queue.dequeue
-  def put(iter: Iterable[T]) = { queue ++= iter }
+  def isEmpty = queue isEmpty
+  def get = queue dequeue
+  def put(elem: T) = { queue enqueue elem }
 
-  override def toString = queue.toString
+  override def toString = queue toString
 }
 
-class SequentialEvaluator(tasks: Q[Task]) extends ExpIterator {
+class SequentialEvaluator(pending: Q[Expression]) extends ExpIterator {
   private var interrupted: Boolean = false
   private var nextExp: Expression = null
 
@@ -37,7 +37,7 @@ class SequentialEvaluator(tasks: Q[Task]) extends ExpIterator {
 
   def init(exp: Expression) {
     goal = Normalise.hnf(this,Normalise.nf(exp))
-    tasks.put(new Task(goal,null) :: Nil)    
+    pending.put(goal)    
   }
 
   def putNext(exp: Expression) {
@@ -53,23 +53,21 @@ class SequentialEvaluator(tasks: Q[Task]) extends ExpIterator {
     nextExp = null
     res
   } else throw new NoSuchElementException()
+  
+  private def addPending(exps: Iterable[Expression]) {
+	exps.foreach(e => if (e.shouldBeScheduled) {
+                		e.setPending
+                		pending.put(e)
+              		  } else ())
+  }
 
   private def computeNext: Boolean = {
-    while (!(interrupted || tasks.isEmpty)) {
-//       println(goal)
-//       println(" " + tasks)
-      val task = tasks.get
-      task.perform match {
-        case Nil => {
-          if (task.parent != null) {
-            task.parent.decDeps
-            if (task.parent.deps.isEmpty || task.parent.deps.get == 0)
-              tasks.put(task.parent::Nil)
-          }
-        }
-        case newts => tasks.put(newts)
-      }
+    while (!(interrupted || pending.isEmpty)) {
+      val exp = pending.get
+      var exps = exp.nextExps
+      if (exps.isEmpty) addPending(exp.pendingParents)
+      else addPending(exps)
     }
-    !(nextExp == null && tasks.isEmpty)
+    !(nextExp == null && pending.isEmpty)
   }
 }
