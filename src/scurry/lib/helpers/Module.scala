@@ -3,110 +3,74 @@ package scurry.lib.helpers
 import scurry.rts._
 
 class Module {
-  def newTask(exp: Expression, parent: Task) =
-    /*if (exp.isActive) None else*/ {
-      exp.setActive
-      Some(new Task(exp,parent))
-    }
-
-  def ret(task: Task, result: Expression) = {
-    task.exp.become(result)
-    retTasks(task,result)
+  def ret(exp: Exp, result: Exp) = {
+    exp.become(result)
+    retNext(result)
   }
 
-  private def retTasks(task: Task, exp: Expression): List[Task] = {
+  private def retNext(exp: Exp): Array[Exp] = {
     exp.kind match {
-      case Operation(_,_) => newTask(exp,task.parent).toList
-//       case Choice => exp.args.flatMap(e => retTasks(task,e)).toList
-      case _ => Nil
+      case Op(_,_,_) => Array(exp)
+      case _ => Array()
     }
   }
 
-  def retCons(task: Task, kind: ExpKind, args: Array[Expression]) = {
-    task.exp.set(kind,args)
-    Nil
-  }
-
-  def matchArg(task: Task, index: Int, 
-               replace: (ConsName,Boolean,Array[Expression]) => List[Task]) = {
-    val arg = task.exp.args(index)
-    arg.simplifyChoice
-    arg.kind match {
-      case Failure => { 
-        task.exp.become(Exp.failure)
-        Nil
+  def matchArg(exp: Exp, index: Int, 
+               replace: (ConsName,Array[Exp]) => Array[Exp]) = {
+    val arg = exp.args(index)
+    if (arg.isHNF) {
+      arg.kind match {
+        case Choice => distribute(exp,index)
+        case Constr(name) => replace(name,arg.args)
       }
-      case Choice => {
-        arg.args.partition(e => e.isHeadNormalised) match {
-          case (hnfs,es) => {
-            if (hnfs.isEmpty) {
-              task.setDeps(1)
-              es.flatMap(e => newTask(e,task)).toList
-            } else {
-              var exp = task.exp
-              var ts = hnfs.map(h => {
-                var t = task.copy
-                t.exp.args.update(index,h)
-                t
-              })
-              var args = ts.map(t => t.exp)
-              if (!es.isEmpty) {
-                val e = if (es.length == 1) es(0)
-                        else Exp.simple_choice(es.toArray)
-
-                val copy = task.exp.copy
-                copy.args.update(index,e)
-                args = args ++ Array(copy)
-                ts = ts ++ newTask(copy,task.parent)
-                task.cancel // surprisingly tricky to reuse task safely
-                /* Here, we destroy the parent of a possibly long chain of
-                 * already executed tasks. If the end of this chain is picked
-                 * before the newly created task this is no problem, but if not
-                 * work is duplicated. The reason why we destroy the task is
-                 * that we cannot be sure that all operation rooted sub-terms
-                 * of the rotated choice are already active. Especially, when
-                 * a function returns a choice where one argument is in HNF
-                 * but the other is not, then it does not create a task for the
-                 * op-rooted alternative. It returns an empty list of tasks
-                 * to reenable the parent to be executed. */
-              }
-              exp.become(Exp.simple_choice(args.toArray))
-              ts.toList
-            }
-          }
-        }
-      }
-      case Constructor(name,isNF) => replace(name,isNF,arg.args)
-      case Operation(_,_) => {
-        val ts = newTask(arg,task).toList
-        task.setDeps(ts.length)
-        ts
-      }
+    } else { // operation-rooted or non-hnf choice
+      exp.waitFor(arg)
+      Array(arg)
     }
   }
+  
+  private def distribute(exp: Exp, index: Int) = {
+    val arg = exp.args(index)
+    
+    var exps = arg.args.map(e => {
+                 // copy distributed node
+                 val es = exp.args.toArray
+                 // but update the corresponding argument
+                 es.update(index,e)
+                 val alt = new Exp(exp.kind,es)
+                 // add choice as parent
+                 alt.addParent(exp)
+                 // wait for active alternatives and continue with others
+                 if (e.isPending || e.isWaiting) alt.waitFor(e)
+                 else alt.setReady
+                 alt
+               })
 
-  def matchArgs(task: Task, indices: List[Int], 
-                replace: List[ConsName] => List[Task]) =
+    exp.setKind(Choice/* == arg.kind*/)
+    exp.setWaiting
+    exp.setArgs(exps)
+    
+    exps
+  }
+
+  def matchArgs(exp: Exp, indices: Array[Int], 
+                replace: List[ConsName] => Array[Exp]) =
   {
-    // indices lists the arguments to be matched
-    // indices.isEmpty indicates that all arguments are to be matched 
-    val exps: List[Expression] =
-      if (indices.isEmpty) task.exp.args.toList
-      else indices.map(i => task.exp.args(i))
-    var choiceIndex = exps.findIndexOf(e => e.isChoice)
-    if (exps.exists(e => e.isFailure)) {
-      task.exp.become(Exp.failure)
-      Nil
-    } else if (choiceIndex >= 0) {
-      matchArg(task,choiceIndex, (_,_,_) => List(task))
-    } else if (exps.forall(e => e.isHeadNormalised)) {
-      replace(exps.map(e => e.kind match {
-        case Constructor(name,isNF) => name
-      }))
+    val args = if (indices.isEmpty) exp.args else indices.map(exp.args)
+    
+    if (args.forall(_.isHNF)) {
+      val choiceIndex = args.findIndexOf(_.isChoice)
+      if (choiceIndex >= 0) {
+        matchArg(exp,choiceIndex, (_,_) => { exp.setReady; Array(exp) })
+      } else {
+        replace(args.map(e => e.kind match {
+          case Constr(name) => name
+        }).toList)
+      }
     } else {
-      val ts = exps.flatMap(e => if (e.isOperation) newTask(e,task) else None)
-      task.setDeps(ts.length)
-      ts
+      val exps = args.filter(!_.isHNF)
+      exps.foreach(exp.waitFor(_))
+      exps
     }
   }
 }

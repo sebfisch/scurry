@@ -2,45 +2,38 @@ package scurry.lib.helpers
 
 import scurry.rts._
 
-abstract class ExpIterator extends Iterator[Expression] {
-  def putNext(exp: Expression)
+abstract class ExpIterator extends Iterator[Exp] {
+  def putNext(exp: Exp)
 }
 
 object Normalise extends Module {
-  def hnf(master: ExpIterator, exp: Expression) =
-    Exp.oper("hnf",Array(exp),t=>hnf_(master,t))
+  def hnf(master: ExpIterator, exp: Exp) =
+    Exp.op("hnf",Array(exp),e=>hnf_(master,e))
 
-  private def hnf_(master: ExpIterator, task: Task): List[Task] = {
-    matchArg(task, 0, (_,_,_) => { 
-      master.putNext(task.exp.args(0))
-      Nil
+  private def hnf_(master: ExpIterator, exp: Exp): Array[Exp] = {
+    matchArg(exp,0,(_,_) => { 
+      master.putNext(exp.args(0))
+      Array()
     })
   }
 
-  def nf(exp: Expression) =
-    Exp.oper("nf",Array(exp),t=>nf_(t))
+  def nf(exp: Exp) = Exp.op("nf",Array(exp),nf_)
 
-  private def nf_(task: Task): List[Task] = {
-    matchArg(task, 0, (name,isNF,args) => {
-      if (args.exists(x=>x.isFailure)) {
-        task.exp.become(Exp.failure)
-        Nil
-      } else if (isNF) {
-        task.exp.set(Constructor(name,true),args)
-        Nil
-      } else {
-        val consexp = task.exp.args(0)
-        consexp.setKind(Operation(name.toString,
-                                  t=>nf_cons_(Constructor(name,true),t)))
+  private def nf_(exp: Exp): Array[Exp] = {
+    if (exp.isNF) {
+      exp.become(exp.args(0))
+      Array()
+    } else {
+      matchArg(exp,0,(name,args) => {
+        val consexp = exp.args(0)
+        consexp.setKind(Op(name.toString, 0, e=>nf_cons_(name,e)))
         consexp.setArgs(args.map(x => nf(x)))
-        val ts = newTask(consexp,task).toList
-        task.setDeps(ts.length)
-        ts
-      }
-    })
+        Array(consexp)
+      })
+    }
   }
 
-  private def nf_cons_(kind: ExpKind, task: Task) = {
-    matchArgs(task,Nil,_ => retCons(task,kind,task.exp.args))
+  private def nf_cons_(name: ConsName, exp: Exp) = {
+    matchArgs(exp,Array(),_ => ret(exp,Exp.constr(name,exp.args)))
   }
 }

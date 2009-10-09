@@ -29,18 +29,18 @@ class FifoQ[T] extends Q[T] {
   override def toString = queue toString
 }
 
-class SequentialEvaluator(pending: Q[Expression]) extends ExpIterator {
+class SequentialEvaluator(pending: Q[Exp]) extends ExpIterator {
   private var interrupted: Boolean = false
-  private var nextExp: Expression = null
+  private var nextExp: Exp = null
 
-  private var goal: Expression = null
+  private var goal: Exp = null
 
-  def init(exp: Expression) {
+  def init(exp: Exp) {
     goal = Normalise.hnf(this,Normalise.nf(exp))
     pending.put(goal)    
   }
 
-  def putNext(exp: Expression) {
+  def putNext(exp: Exp) {
     interrupted = true
     nextExp = exp
   }
@@ -54,7 +54,7 @@ class SequentialEvaluator(pending: Q[Expression]) extends ExpIterator {
     res
   } else throw new NoSuchElementException()
   
-  private def addPending(exps: Iterable[Expression]) {
+  private def addPending(exps: Iterable[Exp]) {
 	exps.foreach(e => if (e.shouldBeScheduled) {
                 		e.setPending
                 		pending.put(e)
